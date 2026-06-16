@@ -1,0 +1,6 @@
+# Per-user runtime config
+SurfacePenRemap.ini
+
+# Diagnostic logs
+penlog.txt
+*.log
