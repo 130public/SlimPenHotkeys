@@ -183,7 +183,6 @@ ApplyHook(section) {
     global SingleHotkey, DoubleHotkey, LongHotkey
     global SingleEnabled, DoubleEnabled, LongEnabled
     global cbSingleEnable, cbDoubleEnable, cbLongEnable
-    global PenTriggeredWin
 
     if (section = "Single") {
         trigger := SingleTrigger, hotkeyOut := SingleHotkey
