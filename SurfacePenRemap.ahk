@@ -40,25 +40,56 @@ HoldMs        := IniRead(IniFile, "Settings", "HoldMs",  "120")
 ; Track registered hooks so we can unregister cleanly
 HookKeys := Map()
 
-; The Surface Pen sends LWin down before each F-key.  We use * prefix
-; on the F-key hotkeys (fires regardless of modifiers) and separately
-; hook LWin Up to suppress the Start menu when a pen trigger just fired.
-; PenLastTrigger stores the tick count of the most recent pen trigger.
-global PenLastTrigger := 0
+; ---- LWin interception for Surface Pen ---------------------
+; The Surface Pen sends LWin-down then F20-down almost simultaneously.
+; Windows intercepts Win+F-key combos at the system level BEFORE AHK's
+; keyboard hook can see the F-key.  The only way to catch F20 is to
+; suppress LWin first.
+;
+; Strategy:
+;   1. Hook $*LWin — suppress it, start a 30ms one-shot timer.
+;   2. If a pen F-key (F18/F19/F20) arrives within 30ms, cancel the
+;      timer — the LWin was from the pen, keep it suppressed.
+;   3. If the timer fires with no F-key, replay LWin (real Win press).
+;   4. On $*LWin Up, either suppress (pen) or replay (real Win).
 
-; Named handler functions — fat-arrow closures inside functions can't
-; reliably set globals in AHK v2, so we use named functions instead.
-OnPenTriggerDown(*) {
-    global PenLastTrigger
-    PenLastTrigger := A_TickCount
+global LWinState := 0  ; 0 = idle, 1 = suppressed (waiting), 2 = replayed
+
+OnLWinDown(*) {
+    global LWinState
+    LWinState := 1
+    SetTimer(ReplayLWin, -30)
+}
+
+ReplayLWin() {
+    global LWinState
+    if (LWinState = 1) {
+        LWinState := 2
+        SendInput("{LWin Down}")
+    }
 }
 
 OnLWinUp(*) {
-    global PenLastTrigger
-    if (A_TickCount - PenLastTrigger < 1000) {
-        return  ; swallow — pen just fired, don't open Start menu
+    global LWinState
+    SetTimer(ReplayLWin, 0)  ; cancel pending timer
+    if (LWinState = 2) {
+        ; LWin was replayed (real Win press) — send Up to match
+        LWinState := 0
+        SendInput("{LWin Up}")
+    } else if (LWinState = 1) {
+        ; LWin was suppressed and no F-key came, but released quickly
+        ; — this was a quick Win tap. Replay the full tap.
+        LWinState := 0
+        SendInput("{LWin Down}{LWin Up}")
+    } else {
+        LWinState := 0
     }
-    Send("{Blind}{LWin Up}")  ; pass through for normal Win key usage
+}
+
+OnPenFKeyDown(*) {
+    global LWinState
+    SetTimer(ReplayLWin, 0)  ; cancel — this LWin was from the pen
+    LWinState := 0           ; keep LWin suppressed
 }
 
 ; ---- Build GUI ---------------------------------------------
@@ -178,7 +209,9 @@ ApplyAllHooks() {
     ApplyHook("Single")
     ApplyHook("Double")
     ApplyHook("Long")
-    ; Install LWin Up suppression ($ prevents Send retriggering it)
+    ; Intercept LWin so Windows can't swallow pen F-key combos.
+    ; $ prevents SendInput("{LWin ...}") from retriggering these hooks.
+    try Hotkey("$*LWin", OnLWinDown, "On")
     try Hotkey("$*LWin Up", OnLWinUp, "On")
     UpdateTrayTip()
     UpdateToggleButton()
@@ -217,11 +250,11 @@ ApplyHook(section) {
         try {
             capturedTrigger := trigger
             capturedHotkey := hotkeyOut
-            ; Use * prefix so the hotkey fires regardless of held modifiers
-            ; (the Surface Pen sends LWin before each F-key).
-            ; OnPenTriggerDown sets PenLastTrigger timestamp so the
-            ; $*LWin Up hook knows to suppress the Start menu.
-            Hotkey("*" trigger, OnPenTriggerDown, "On")
+            ; Use * prefix so the hotkey fires regardless of held modifiers.
+            ; OnPenFKeyDown cancels the LWin replay timer (pen LWin stays
+            ; suppressed).  Fire output on key Up so the trigger is fully
+            ; released before we synthesize the output combo.
+            Hotkey("*" trigger, OnPenFKeyDown, "On")
             Hotkey("*" trigger " Up", (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
             HookKeys[section] := trigger
             SetStatus(section " press: " trigger " -> " hotkeyOut)
