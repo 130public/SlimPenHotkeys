@@ -40,11 +40,10 @@ HoldMs        := IniRead(IniFile, "Settings", "HoldMs",  "120")
 ; Track registered hooks so we can unregister cleanly
 HookKeys := Map()
 
-; The Surface Pen sends LWin down before each F-key press.
-; To prevent the Start menu from opening, we send a dummy keystroke
-; ({vkE8} — an unassigned virtual key) on trigger-down.  Windows only
-; opens Start menu if LWin is pressed and released with NO other key
-; in between; the dummy key breaks that sequence.
+; The Surface Pen sends LWin+F20 / LWin+F19 / LWin+F18 for its three
+; gestures.  We register hotkeys with the # (Win) modifier so AHK
+; consumes both the LWin and the F-key as a single combo — this
+; prevents the Start menu from opening on LWin release.
 
 ; ---- Build GUI ---------------------------------------------
 g := Gui("+Resize +ToolWindow", AppName)
@@ -170,10 +169,8 @@ ApplyAllHooks() {
 ClearAllHooks() {
     global HookKeys
     for name, key in HookKeys {
-        try Hotkey("*" key, "Off")
-        try Hotkey("*" key, (*) => 0)
-        try Hotkey("*" key " Up", "Off")
-        try Hotkey("*" key " Up", (*) => 0)
+        try Hotkey("#" key, "Off")
+        try Hotkey("#" key, (*) => 0)
     }
     HookKeys := Map()
 }
@@ -202,12 +199,12 @@ ApplyHook(section) {
         try {
             capturedTrigger := trigger
             capturedHotkey := hotkeyOut
-            ; Use * prefix so the hotkey fires regardless of held modifiers
-            ; (the Surface Pen sends LWin before each F-key).
-            ; Send {vkE8} (unassigned key) on key-down to break the
-            ; LWin-only sequence so Windows won't open the Start menu.
-            Hotkey("*" trigger, (*) => SendInput("{vkE8}"), "On")
-            Hotkey("*" trigger " Up", (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
+            ; Register with # (Win) modifier — the pen sends LWin+F20,
+            ; so #F20 matches exactly and AHK suppresses both keys,
+            ; preventing the Start menu.  Fire on key-down; FireOutput
+            ; calls KeyWait to wait for the physical release before
+            ; sending the output combo.
+            Hotkey("#" trigger, (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
             HookKeys[section] := trigger
             SetStatus(section " press: " trigger " -> " hotkeyOut)
         } catch as e {
