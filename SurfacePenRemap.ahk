@@ -41,10 +41,10 @@ HoldMs        := IniRead(IniFile, "Settings", "HoldMs",  "120")
 HookKeys := Map()
 
 ; The Surface Pen sends LWin down before each F-key press.
-; We suppress the LWin-up that follows a pen trigger so the Start menu
-; doesn't flash open.  PenTriggeredWin is set true by the pen hook and
-; cleared by the LWin-up handler.
-global PenTriggeredWin := false
+; To prevent the Start menu from opening, we send a dummy keystroke
+; ({vkE8} — an unassigned virtual key) on trigger-down.  Windows only
+; opens Start menu if LWin is pressed and released with NO other key
+; in between; the dummy key breaks that sequence.
 
 ; ---- Build GUI ---------------------------------------------
 g := Gui("+Resize +ToolWindow", AppName)
@@ -143,21 +143,6 @@ UpdateTrayTip()
 
 ApplyAllHooks()
 
-; Suppress the LWin that the Surface Pen sends alongside each F-key.
-; The pen sends: LWin-down, F20-down, F20-up, LWin-up.
-; Without this, the final LWin-up opens the Start menu.
-; $ prevents Send from retriggering the hotkey.
-Hotkey("$*LWin", (*) => Send("{Blind}{LWin Down}"))
-Hotkey("$*LWin Up", SuppressPenWinUp)
-SuppressPenWinUp(*) {
-    global PenTriggeredWin
-    if PenTriggeredWin {
-        PenTriggeredWin := false
-        return  ; swallow — don't let Start menu open
-    }
-    Send("{Blind}{LWin Up}")
-}
-
 g.Show("Hide")
 g.Show()
 
@@ -220,7 +205,9 @@ ApplyHook(section) {
             capturedHotkey := hotkeyOut
             ; Use * prefix so the hotkey fires regardless of held modifiers
             ; (the Surface Pen sends LWin before each F-key).
-            Hotkey("*" trigger, (*) => (PenTriggeredWin := true), "On")
+            ; Send {vkE8} (unassigned key) on key-down to break the
+            ; LWin-only sequence so Windows won't open the Start menu.
+            Hotkey("*" trigger, (*) => SendInput("{vkE8}"), "On")
             Hotkey("*" trigger " Up", (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
             HookKeys[section] := trigger
             SetStatus(section " press: " trigger " -> " hotkeyOut)
