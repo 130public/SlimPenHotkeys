@@ -40,10 +40,26 @@ HoldMs        := IniRead(IniFile, "Settings", "HoldMs",  "120")
 ; Track registered hooks so we can unregister cleanly
 HookKeys := Map()
 
-; The Surface Pen sends LWin+F20 / LWin+F19 / LWin+F18 for its three
-; gestures.  We register hotkeys with the # (Win) modifier so AHK
-; consumes both the LWin and the F-key as a single combo — this
-; prevents the Start menu from opening on LWin release.
+; The Surface Pen sends LWin down before each F-key.  We use * prefix
+; on the F-key hotkeys (fires regardless of modifiers) and separately
+; hook LWin Up to suppress the Start menu when a pen trigger just fired.
+; PenLastTrigger stores the tick count of the most recent pen trigger.
+global PenLastTrigger := 0
+
+; Named handler functions — fat-arrow closures inside functions can't
+; reliably set globals in AHK v2, so we use named functions instead.
+OnPenTriggerDown(*) {
+    global PenLastTrigger
+    PenLastTrigger := A_TickCount
+}
+
+OnLWinUp(*) {
+    global PenLastTrigger
+    if (A_TickCount - PenLastTrigger < 1000) {
+        return  ; swallow — pen just fired, don't open Start menu
+    }
+    Send("{Blind}{LWin Up}")  ; pass through for normal Win key usage
+}
 
 ; ---- Build GUI ---------------------------------------------
 g := Gui("+Resize +ToolWindow", AppName)
@@ -162,6 +178,8 @@ ApplyAllHooks() {
     ApplyHook("Single")
     ApplyHook("Double")
     ApplyHook("Long")
+    ; Install LWin Up suppression ($ prevents Send retriggering it)
+    try Hotkey("$*LWin Up", OnLWinUp, "On")
     UpdateTrayTip()
     UpdateToggleButton()
 }
@@ -169,8 +187,8 @@ ApplyAllHooks() {
 ClearAllHooks() {
     global HookKeys
     for name, key in HookKeys {
-        try Hotkey("#" key, "Off")
-        try Hotkey("#" key, (*) => 0)
+        try Hotkey("*" key, "Off")
+        try Hotkey("*" key " Up", "Off")
     }
     HookKeys := Map()
 }
@@ -199,12 +217,12 @@ ApplyHook(section) {
         try {
             capturedTrigger := trigger
             capturedHotkey := hotkeyOut
-            ; Register with # (Win) modifier — the pen sends LWin+F20,
-            ; so #F20 matches exactly and AHK suppresses both keys,
-            ; preventing the Start menu.  Fire on key-down; FireOutput
-            ; calls KeyWait to wait for the physical release before
-            ; sending the output combo.
-            Hotkey("#" trigger, (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
+            ; Use * prefix so the hotkey fires regardless of held modifiers
+            ; (the Surface Pen sends LWin before each F-key).
+            ; OnPenTriggerDown sets PenLastTrigger timestamp so the
+            ; $*LWin Up hook knows to suppress the Start menu.
+            Hotkey("*" trigger, OnPenTriggerDown, "On")
+            Hotkey("*" trigger " Up", (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
             HookKeys[section] := trigger
             SetStatus(section " press: " trigger " -> " hotkeyOut)
         } catch as e {
