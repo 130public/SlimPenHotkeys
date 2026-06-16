@@ -40,6 +40,12 @@ HoldMs        := IniRead(IniFile, "Settings", "HoldMs",  "120")
 ; Track registered hooks so we can unregister cleanly
 HookKeys := Map()
 
+; The Surface Pen sends LWin down before each F-key press.
+; We suppress the LWin-up that follows a pen trigger so the Start menu
+; doesn't flash open.  PenTriggeredWin is set true by the pen hook and
+; cleared by the LWin-up handler.
+global PenTriggeredWin := false
+
 ; ---- Build GUI ---------------------------------------------
 g := Gui("+Resize +ToolWindow", AppName)
 g.MarginX := 14, g.MarginY := 12
@@ -136,6 +142,22 @@ A_TrayMenu.Default := "Show " AppName
 UpdateTrayTip()
 
 ApplyAllHooks()
+
+; Suppress the LWin that the Surface Pen sends alongside each F-key.
+; The pen sends: LWin-down, F20-down, F20-up, LWin-up.
+; Without this, the final LWin-up opens the Start menu.
+; $ prevents Send from retriggering the hotkey.
+Hotkey("$*LWin", (*) => Send("{Blind}{LWin Down}"))
+Hotkey("$*LWin Up", SuppressPenWinUp)
+SuppressPenWinUp(*) {
+    global PenTriggeredWin
+    if PenTriggeredWin {
+        PenTriggeredWin := false
+        return  ; swallow — don't let Start menu open
+    }
+    Send("{Blind}{LWin Up}")
+}
+
 g.Show("Hide")
 g.Show()
 
@@ -163,10 +185,10 @@ ApplyAllHooks() {
 ClearAllHooks() {
     global HookKeys
     for name, key in HookKeys {
-        try Hotkey(key, "Off")
-        try Hotkey(key, (*) => 0)
-        try Hotkey(key " Up", "Off")
-        try Hotkey(key " Up", (*) => 0)
+        try Hotkey("*" key, "Off")
+        try Hotkey("*" key, (*) => 0)
+        try Hotkey("*" key " Up", "Off")
+        try Hotkey("*" key " Up", (*) => 0)
     }
     HookKeys := Map()
 }
@@ -176,6 +198,7 @@ ApplyHook(section) {
     global SingleHotkey, DoubleHotkey, LongHotkey
     global SingleEnabled, DoubleEnabled, LongEnabled
     global cbSingleEnable, cbDoubleEnable, cbLongEnable
+    global PenTriggeredWin
 
     if (section = "Single") {
         trigger := SingleTrigger, hotkeyOut := SingleHotkey
@@ -195,8 +218,10 @@ ApplyHook(section) {
         try {
             capturedTrigger := trigger
             capturedHotkey := hotkeyOut
-            Hotkey(trigger, (*) => 0, "On")
-            Hotkey(trigger " Up", (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
+            ; Use * prefix so the hotkey fires regardless of held modifiers
+            ; (the Surface Pen sends LWin before each F-key).
+            Hotkey("*" trigger, (*) => (PenTriggeredWin := true), "On")
+            Hotkey("*" trigger " Up", (*) => FireOutput(capturedHotkey, capturedTrigger), "On")
             HookKeys[section] := trigger
             SetStatus(section " press: " trigger " -> " hotkeyOut)
         } catch as e {
