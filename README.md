@@ -19,6 +19,8 @@ from the Surface Pen top button.
 - Modern WinUI 3 interface with Mica backdrop.
 - Test page to visualize pen button events and hotkey triggers live.
 
+![SlimPen Hotkeys screenshot](assets/1366x768.png)
+
 ## Install
 
 Install from the **Microsoft Store** (recommended), or build from source:

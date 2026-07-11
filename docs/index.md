@@ -3,6 +3,31 @@ layout: default
 title: SlimPen Hotkeys
 ---
 
+<style>
+  body {
+    background-color: #1E1F23;
+    color: #d5d7dd;
+  }
+  .wrapper { background-color: #1E1F23; }
+  header, section, footer { color: #d5d7dd; }
+  h1, h2, h3, h4, h5, h6 { color: #ffffff; }
+  a, a:hover { color: #4aa3ff; }
+  header h1, header p { color: #ffffff; }
+  p, li { color: #d5d7dd; }
+  strong { color: #ffffff; }
+  code, pre {
+    background-color: #2a2b31;
+    color: #e6e6e6;
+    border-color: #3a3b42;
+  }
+  blockquote { color: #b0b2b8; border-left-color: #3a3b42; }
+  hr { background: #3a3b42; }
+  table th, table td { border-color: #3a3b42; }
+  .hero { width: 100%; height: auto; border-radius: 8px; margin-bottom: 1.5em; }
+</style>
+
+<img class="hero" src="assets/1920x1080.png" alt="Map keyboard hotkeys to your slim pen button" />
+
 # SlimPen Hotkeys
 
 Remap your Surface Slim Pen top-button gestures (single press, double press,
@@ -16,6 +41,8 @@ long press) to any keyboard shortcut.
 - Individual enable/disable per gesture, plus a master toggle
 - System tray icon with quick-access menu
 - Minimal, modern WinUI 3 interface with Mica backdrop
+
+![SlimPen Hotkeys screenshot](assets/1366x768.png)
 
 ## Download
 
