@@ -23,10 +23,19 @@ title: SlimPen Hotkeys
   blockquote { color: #b0b2b8; border-left-color: #3a3b42; }
   hr { background: #3a3b42; }
   table th, table td { border-color: #3a3b42; }
-  .hero { width: 100%; height: auto; border-radius: 8px; margin-bottom: 1.5em; }
+  .hero-banner {
+    display: block;
+    clear: both;
+    width: 100%;
+    margin: 0 0 30px;
+    line-height: 0;
+  }
+  .hero-banner img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
 </style>
-
-<img class="hero" src="assets/1920x1080.png" alt="Map keyboard hotkeys to your slim pen button" />
 
 # SlimPen Hotkeys
 
