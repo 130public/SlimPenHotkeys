@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SlimPen Hotkeys (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "SlimPen Hotkeys (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

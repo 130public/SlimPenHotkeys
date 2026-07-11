@@ -1,6 +1,19 @@
 # Per-user runtime config
+SlimPenHotkeys.ini
 SurfacePenRemap.ini
 
 # Diagnostic logs
 penlog.txt
 *.log
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo

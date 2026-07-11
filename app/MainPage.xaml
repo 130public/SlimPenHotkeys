@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="SlimPenHotkeys.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:SlimPenHotkeys"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <NavigationView x:Name="Nav" Grid.Row="0"
+                        PaneDisplayMode="Left"
+                        OpenPaneLength="190"
+                        IsSettingsVisible="False"
+                        IsBackButtonVisible="Collapsed"
+                        SelectionChanged="Nav_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="NavSingle" Content="Single Press" Tag="single" IsSelected="True">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Edit" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavDouble" Content="Double Press" Tag="double">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Copy" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavLong" Content="Long Press" Tag="long">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Clock" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavTest" Content="Test" Tag="test">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE945;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavSettings" Content="Settings" Tag="settings">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Setting" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" Padding="0">
+                <Grid Margin="20,16" Width="460" HorizontalAlignment="Left">
+
+                    <!-- Single press -->
+                    <StackPanel x:Name="SinglePanel" Spacing="6">
+                        <TextBlock Text="Single Press" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Trigger key:" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="SingleTrigger" Grid.Column="0" AutomationProperties.Name="Single press trigger key" />
+                            <Button x:Name="SingleTriggerLearn" Grid.Column="1" Content="Learn…" Click="SingleTriggerLearn_Click" />
+                        </Grid>
+                        <TextBlock Text="Send hotkey:" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="SingleHotkey" Grid.Column="0" AutomationProperties.Name="Single press send hotkey" />
+                            <Button x:Name="SingleHotkeyLearn" Grid.Column="1" Content="Learn…" Click="SingleHotkeyLearn_Click" />
+                        </Grid>
+                        <CheckBox x:Name="SingleEnabled" Content="Enabled" />
+                    </StackPanel>
+
+                    <!-- Double press -->
+                    <StackPanel x:Name="DoublePanel" Spacing="6" Visibility="Collapsed">
+                        <TextBlock Text="Double Press" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Trigger key:" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="DoubleTrigger" Grid.Column="0" AutomationProperties.Name="Double press trigger key" />
+                            <Button x:Name="DoubleTriggerLearn" Grid.Column="1" Content="Learn…" Click="DoubleTriggerLearn_Click" />
+                        </Grid>
+                        <TextBlock Text="Send hotkey:" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="DoubleHotkey" Grid.Column="0" AutomationProperties.Name="Double press send hotkey" />
+                            <Button x:Name="DoubleHotkeyLearn" Grid.Column="1" Content="Learn…" Click="DoubleHotkeyLearn_Click" />
+                        </Grid>
+                        <CheckBox x:Name="DoubleEnabled" Content="Enabled" />
+                    </StackPanel>
+
+                    <!-- Long press -->
+                    <StackPanel x:Name="LongPanel" Spacing="6" Visibility="Collapsed">
+                        <TextBlock Text="Long Press" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Trigger key:" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="LongTrigger" Grid.Column="0" AutomationProperties.Name="Long press trigger key" />
+                            <Button x:Name="LongTriggerLearn" Grid.Column="1" Content="Learn…" Click="LongTriggerLearn_Click" />
+                        </Grid>
+                        <TextBlock Text="Send hotkey:" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="LongHotkey" Grid.Column="0" AutomationProperties.Name="Long press send hotkey" />
+                            <Button x:Name="LongHotkeyLearn" Grid.Column="1" Content="Learn…" Click="LongHotkeyLearn_Click" />
+                        </Grid>
+                        <CheckBox x:Name="LongEnabled" Content="Enabled" />
+                    </StackPanel>
+
+                    <!-- Test / visualizer -->
+                    <StackPanel x:Name="TestPanel" Spacing="12" Visibility="Collapsed">
+                        <TextBlock Text="Test" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Press a pen button to see it light up. The field below flashes when a hotkey is triggered."
+                                   TextWrapping="Wrap"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <!-- Pen button indicator -->
+                        <TextBlock Text="Pen button" FontWeight="SemiBold" Margin="0,4,0,0" />
+                        <Border x:Name="PenIndicator"
+                                Height="90"
+                                CornerRadius="8"
+                                BorderThickness="2"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock x:Name="PenIndicatorText"
+                                           Text="Waiting…"
+                                           HorizontalAlignment="Center"
+                                           Style="{ThemeResource SubtitleTextBlockStyle}" />
+                                <TextBlock x:Name="PenIndicatorSub"
+                                           Text="No pen button pressed yet"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Hotkey trigger visualizer -->
+                        <TextBlock Text="Hotkey triggered" FontWeight="SemiBold" Margin="0,4,0,0" />
+                        <Border x:Name="HotkeyIndicator"
+                                Height="90"
+                                CornerRadius="8"
+                                BorderThickness="2"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock x:Name="HotkeyIndicatorText"
+                                           Text="—"
+                                           HorizontalAlignment="Center"
+                                           Style="{ThemeResource SubtitleTextBlockStyle}" />
+                                <TextBlock x:Name="HotkeyIndicatorSub"
+                                           Text="No hotkey sent yet"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Recent activity log -->
+                        <Grid Margin="0,4,0,0" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Recent activity" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <Button x:Name="ClearLogButton" Grid.Column="1" Content="Clear" Click="ClearLogButton_Click" />
+                        </Grid>
+                        <Border CornerRadius="8"
+                                BorderThickness="1"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                Height="150">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,6">
+                                <ItemsControl x:Name="ActivityLog" />
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Settings -->
+                    <StackPanel x:Name="SettingsPanel" Spacing="6" Visibility="Collapsed">
+                        <TextBlock Text="Settings" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,4,0,0">
+                            <TextBlock Text="Hold duration (ms):" VerticalAlignment="Center" />
+                            <NumberBox x:Name="HoldMs" Value="120" Minimum="1" Maximum="5000" SpinButtonPlacementMode="Compact" Width="140" />
+                        </StackPanel>
+                        <CheckBox x:Name="LaunchAtLogin" Content="Launch at login" Click="LaunchAtLogin_Click" Margin="0,4,0,0" />
+                        <Button x:Name="ToggleButton" Click="ToggleButton_Click" HorizontalAlignment="Stretch" Height="44" Margin="0,10,0,0" />
+                    </StackPanel>
+
+                </Grid>
+            </ScrollViewer>
+        </NavigationView>
+
+        <!-- Fixed footer (Windows dialog style) -->
+        <Border Grid.Row="1"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,14">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusText" Grid.Column="0"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button x:Name="SaveButton" Content="Save" Style="{ThemeResource AccentButtonStyle}" Click="SaveButton_Click" MinWidth="90" />
+                    <Button x:Name="DefaultsButton" Content="Defaults" Click="DefaultsButton_Click" MinWidth="90" />
+                    <Button x:Name="HideButton" Content="Hide" Click="HideButton_Click" MinWidth="90" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

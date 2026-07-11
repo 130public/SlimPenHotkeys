@@ -19,8 +19,8 @@ SetTitleMatchMode 2
 ;   Run PenSniffer.ahk first to discover your pen's key codes.
 ; ============================================================
 
-AppName     := "SurfacePenRemap"
-IniFile     := A_ScriptDir "\SurfacePenRemap.ini"
+AppName     := "SlimPen Hotkeys"
+IniFile     := A_ScriptDir "\SlimPenHotkeys.ini"
 
 ; ---- Load settings (with defaults) -------------------------
 SingleTrigger := IniRead(IniFile, "Single", "Trigger",   "F20")
@@ -189,15 +189,153 @@ UpdateTrayTip()
 
 ApplyAllHooks()
 
-g.Show("Hide")
-g.Show()
+; ---- Scrollable window state (initialize before InitScrollGui) ----
+ScrollPos := 0, ScrollMax := 0, ScrollPage := 0
+ScrollContentH := 0, ScrollWinW := 0, ScrollWinH := 0
+
+InitScrollGui()
 
 Hotkey("^!p", (*) => ShowWindow())
 
 ShowWindow() {
-    global g
-    g.Show("NoActivate")
+    global g, ScrollWinW, ScrollWinH
+    if (ScrollWinH)
+        g.Show("NoActivate w" ScrollWinW " h" ScrollWinH)
+    else
+        g.Show("NoActivate")
     WinActivate("ahk_id " g.Hwnd)
+}
+
+; ============================================================
+; Scrollable window (50% of screen height)
+; ============================================================
+InitScrollGui() {
+    global g, ScrollPos, ScrollMax, ScrollPage
+    global ScrollContentH, ScrollWinW, ScrollWinH
+
+    ; Realize the window (hidden) so its natural content size is known.
+    g.Show("Hide")
+    g.GetClientPos(, , &contentW, &contentH)
+
+    ; GetClientPos can under-report the client height (it may be capped
+    ; before the window is truly shown), which would leave the bottom of
+    ; the content unreachable by the scrollbar. Measure the real extent
+    ; from the bottom-most control instead.
+    maxBottom := 0
+    for hwnd, ctrl in g {
+        ctrl.GetPos(, &cy, , &ch)
+        if (cy + ch > maxBottom)
+            maxBottom := cy + ch
+    }
+    contentH := maxBottom + g.MarginY
+    ScrollContentH := contentH
+
+    ; Target client height = 50% of the content's natural height, so the
+    ; window is always half-size and the rest of the content scrolls.
+    targetH := Floor(contentH * 0.5)
+
+    if (contentH <= targetH) {
+        ; Everything fits — no scrolling needed.
+        ScrollWinW := contentW, ScrollWinH := contentH
+        g.Show("w" contentW " h" contentH)
+        return
+    }
+
+    sbW := DllCall("GetSystemMetrics", "Int", 2, "Int")  ; SM_CXVSCROLL
+    ScrollWinW := contentW + sbW
+    ScrollWinH := targetH
+    ScrollPage := targetH
+    ScrollMax  := contentH
+    ScrollPos  := 0
+
+    g.Show("w" ScrollWinW " h" ScrollWinH)
+
+    ; Add a native vertical scrollbar to the window (after Show so the
+    ; Gui doesn't reset the style), then force a non-client recalc.
+    WS_VSCROLL := 0x00200000
+    style := WinGetStyle("ahk_id " g.Hwnd)
+    DllCall("SetWindowLongPtr", "Ptr", g.Hwnd, "Int", -16, "Ptr", style | WS_VSCROLL)
+    ; SWP_NOSIZE|NOMOVE|NOZORDER|NOACTIVATE|FRAMECHANGED = 0x0027
+    DllCall("SetWindowPos", "Ptr", g.Hwnd, "Ptr", 0, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x0027)
+    UpdateScrollInfo()
+
+    OnMessage(0x0115, OnVScroll)     ; WM_VSCROLL
+    OnMessage(0x020A, OnMouseWheel)  ; WM_MOUSEWHEEL
+    g.OnEvent("Size", OnGuiResize)
+}
+
+UpdateScrollInfo() {
+    global g, ScrollMax, ScrollPage, ScrollPos
+    si := Buffer(28, 0)
+    NumPut("UInt", 28, si, 0)                 ; cbSize
+    NumPut("UInt", 0x1 | 0x2 | 0x4, si, 4)    ; SIF_RANGE | SIF_PAGE | SIF_POS
+    NumPut("Int", 0, si, 8)                   ; nMin
+    NumPut("Int", ScrollMax - 1, si, 12)      ; nMax
+    NumPut("UInt", ScrollPage, si, 16)        ; nPage
+    NumPut("Int", ScrollPos, si, 20)          ; nPos
+    DllCall("SetScrollInfo", "Ptr", g.Hwnd, "Int", 1, "Ptr", si, "Int", 1)  ; SB_VERT
+}
+
+SetScrollPos(newPos) {
+    global g, ScrollPos, ScrollMax, ScrollPage
+    maxPos := ScrollMax - ScrollPage
+    if (newPos < 0)
+        newPos := 0
+    if (newPos > maxPos)
+        newPos := maxPos
+    delta := newPos - ScrollPos
+    if (delta = 0)
+        return
+    ScrollPos := newPos
+    UpdateScrollInfo()
+    ; Scroll all child controls up/down by delta pixels.
+    DllCall("ScrollWindow", "Ptr", g.Hwnd, "Int", 0, "Int", -delta, "Ptr", 0, "Ptr", 0)
+    DllCall("UpdateWindow", "Ptr", g.Hwnd)
+}
+
+OnVScroll(wParam, lParam, msg, hwnd) {
+    global g, ScrollPos, ScrollPage
+    if (hwnd != g.Hwnd)
+        return
+    code := wParam & 0xFFFF
+    switch code {
+        case 0: SetScrollPos(ScrollPos - 20)              ; SB_LINEUP
+        case 1: SetScrollPos(ScrollPos + 20)              ; SB_LINEDOWN
+        case 2: SetScrollPos(ScrollPos - ScrollPage)      ; SB_PAGEUP
+        case 3: SetScrollPos(ScrollPos + ScrollPage)      ; SB_PAGEDOWN
+        case 4, 5:                                        ; SB_THUMBPOSITION / SB_THUMBTRACK
+            si := Buffer(28, 0)
+            NumPut("UInt", 28, si, 0)
+            NumPut("UInt", 0x10, si, 4)                   ; SIF_TRACKPOS
+            DllCall("GetScrollInfo", "Ptr", g.Hwnd, "Int", 1, "Ptr", si)
+            SetScrollPos(NumGet(si, 24, "Int"))           ; nTrackPos
+        case 6: SetScrollPos(0)                           ; SB_TOP
+        case 7: SetScrollPos(ScrollMax)                   ; SB_BOTTOM
+    }
+    return 0
+}
+
+OnMouseWheel(wParam, lParam, msg, hwnd) {
+    global g, ScrollPos
+    ; Wheel messages arrive with the hovered/focused control's hwnd, so
+    ; accept any window belonging to our GUI (root ancestor == g).
+    if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != g.Hwnd)
+        return
+    delta := (wParam >> 16) & 0xFFFF
+    if (delta > 0x7FFF)
+        delta -= 0x10000
+    SetScrollPos(ScrollPos - (delta // 120) * 40)
+    return 0
+}
+
+OnGuiResize(guiObj, minMax, width, height) {
+    global ScrollPage, ScrollPos
+    if (minMax = -1)  ; minimized
+        return
+    guiObj.GetClientPos(, , , &clientH)
+    ScrollPage := clientH
+    UpdateScrollInfo()
+    SetScrollPos(ScrollPos)  ; re-clamp within new page
 }
 
 ; ============================================================
