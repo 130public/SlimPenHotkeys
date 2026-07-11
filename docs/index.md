@@ -22,7 +22,9 @@ title: SlimPen Hotkeys
   }
   blockquote { color: #b0b2b8; border-left-color: #3a3b42; }
   hr { background: #3a3b42; }
-  table th, table td { border-color: #3a3b42; }
+  table th, td { border-color: #3a3b42; }
+  header { position: static; }
+  footer { position: static; float: none; clear: both; width: auto; }
   .hero-banner {
     display: block;
     clear: both;
