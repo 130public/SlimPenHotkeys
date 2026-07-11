@@ -8,8 +8,8 @@
   IgnorableNamespaces="uap uap5 rescap">
 
   <Identity
-    Name="130public"
-    Publisher="CN=130public"
+    Name="130public.SlimPenHotkeys"
+    Publisher="CN=072E5C86-D78A-49E1-82EF-AFAEBA86615D"
     Version="1.0.0.0" />
 
   <Properties>
